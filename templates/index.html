@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>房价数据可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://assets.pyecharts.org/assets/v5/maps/china.js"></script>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; text-align: center; background-color: #f4f7f6; }
+        .container { margin-top: 30px; }
+        #map_container { width: 1000px; height: 650px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        select { padding: 5px 15px; font-size: 16px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>中国省级房价热力图 (2012-2021)</h1>
+        <label for="yearSelect">选择年份：</label>
+        <select id="yearSelect" onchange="updateMap()">
+            {% for y in range(2012, 2022) %}
+                <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+        </select>
+        
+        <div id="map_container"></div>
+    </div>
+
+    <script>
+        // 初始化 ECharts 实例
+        var myChart = echarts.init(document.getElementById('map_container'));
+
+        function updateMap() {
+            var year = document.getElementById('yearSelect').value;
+            myChart.showLoading(); // 显示加载动画
+
+            fetch('/map/' + year)
+                .then(response => response.json())
+                .then(option => {
+                    myChart.hideLoading();
+                    // 应用后端传来的配置项
+                    myChart.setOption(option);
+                })
+                .catch(err => {
+                    console.error("加载失败:", err);
+                    myChart.hideLoading();
+                    alert("数据加载失败，请检查网络或后端服务");
+                });
+        }
+
+        // 页面首次加载时渲染 2012 年数据
+        window.onload = function() {
+            updateMap();
+        };
+
+        // 窗口大小变动时自动重绘
+        window.onresize = function() {
+            myChart.resize();
+        };
+    </script>
+</body>
+</html>
